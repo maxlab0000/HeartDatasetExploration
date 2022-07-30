@@ -1,0 +1,163 @@
+---
+title: "Heart Dataset Exploration"
+author: "Filina Nurcahya-Tjoa"
+date: "2022-07-29"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(reticulate)
+use_python("/usr/bin/python3", required = F)
+#py_install("pandas")
+#py_install("seaborn")
+#py_install("matplotlib")
+#py_install("numpy")
+#py_install("pandas_profiling")
+#py_install("scikit-learn")
+```
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+heart = pd.read_csv('heart.csv')
+heart['HeartDisease'] = heart['HeartDisease'].astype('bool')
+```
+
+# Basic Visualization and Statistics
+
+```{python}
+plt.hist('Age', data = heart, color = 'black',bins = 30)
+plt.title('Distribution of Ages in Sample')
+plt.ylabel('Frequency')
+plt.xlabel('Ages (in Years)')
+plt.show()
+
+plt.scatter(heart['Cholesterol'],heart['MaxHR'], c = heart['MaxHR'], cmap = 'YlGnBu')
+plt.title("Cholesterol vs Max Heart Rate")
+plt.xlabel('Cholesterol')
+plt.ylabel('MaxHR')
+plt.show()
+
+plot = sns.boxplot(x='ChestPainType', y='Cholesterol', data=heart, hue='ChestPainType')
+plt.title('Cholesterol Levels Among Chest Pain Types')
+plt.xlabel('Chest Pain Types')
+plt.ylabel('Cholesterol')
+plt.show()
+```
+
+# Supervised Learning Methods (Logistic & Linear Regression)
+
+```{python}
+import sklearn.model_selection
+from sklearn.model_selection import train_test_split
+
+x = heart.loc[:,['Cholesterol','MaxHR','Age']]
+y = heart.loc[:,['HeartDisease']]
+
+x_train, x_test, y_train, y_test = train_test_split(x,y)
+```
+
+# Multivariate Linear Regression
+
+```{python}
+print("Linear Regression")
+
+import sklearn.linear_model
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression(fit_intercept=True)
+model.fit(x_train, y_train)
+
+print("Linear Regression Model Equation")
+print(model.coef_)
+print(model.intercept_)
+
+print("Linear Regression Model Accuracy")
+print(model.score(x_test, y_test))
+prediction = model.predict(x_test)
+```
+
+# Logistic Regression
+
+```{python}
+print("Logistic Regression")
+
+import sklearn.linear_model
+from sklearn.linear_model import LogisticRegression
+
+x_test = x_test.to_numpy()
+x_train = x_train.to_numpy()
+
+y_train = y_train.values.flatten()
+y_test = y_test.values.flatten()
+
+model = LogisticRegression()
+model.fit(x_train, y_train)
+
+print("Logistic Regression Model Equation")
+print(model.coef_)
+print(model.intercept_)
+# model.predict(x_test)
+
+print("Logistic Regression Model Accuracy")
+print(model.score(x_test, y_test))
+```
+
+```{python}
+sns.lmplot(x="Age", y="Cholesterol", data=heart, x_jitter=.05, scatter_kws={"color": "green"}, line_kws={"color": "blue"});
+
+plt.show()
+
+sns.regplot(x = heart['Cholesterol'], y = heart['HeartDisease'], logistic = True, ci = False, scatter_kws={"color": "green"}, line_kws={"color": "blue"});
+
+plt.show()
+```
+
+# Decision Trees
+
+```{python}
+import sklearn.tree
+from sklearn.tree import DecisionTreeClassifier
+
+import sklearn.model_selection
+from sklearn.model_selection import train_test_split
+
+x = heart.loc[:,['Cholesterol','MaxHR','Age']]
+y = heart.loc[:,['HeartDisease']]
+
+x_train, x_test, y_train, y_test = train_test_split(x,y)
+
+x = range(1,30,5)
+y = []
+print("Loop to find Optimal Number of Splits")
+for i in range(1,30,5) :
+    Tree = DecisionTreeClassifier(max_depth = i, random_state = 2)
+    Tree.fit(x_train, y_train)
+    y.append(Tree.score(x_test, y_test))
+plt.plot(x,y, color = 'gray')
+plt.title('Optimal Number of Splits')
+plt.xlabel('Number of Splits')
+plt.ylabel('Accuracy')
+plt.show()
+
+print("We can see from the graph that the optimal number of splits is around 6. However, this makes it that the graph is hard to read. Therefore the tree below has three splits.")
+
+from sklearn import tree
+
+from matplotlib.pyplot import figure
+
+Tree = DecisionTreeClassifier(max_depth = 3, random_state = 2)
+Tree.fit(x_train, y_train)
+print(Tree.score(x_test, y_test))
+tree.plot_tree(Tree, filled = True)
+plt.show()
+```
+
+
